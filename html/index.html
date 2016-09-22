@@ -1,0 +1,609 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+
+
+
+
+
+
+<html slick-uniqueid="3">
+
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+
+
+
+<title>ENGG5104 Project 3: Optical Flow Estimation</title>
+
+
+</head>
+
+<body bgcolor="#FFFFFF">
+
+
+
+<h1 align="center"><font face="Arial"><strong>ENGG5104 Project 3: Optical Flow Estimation</strong></font></h1>
+
+
+
+
+
+<h2 align="left"><font face="Arial"><u>Goal</u></font></h2>
+
+Implement the modern version of Horn-Schunck method using pyramid-based coarse-to-fine scheme.
+
+
+<h2 align="left"><font face="Arial"><u>Algorithm</u></font></h2>
+
+<h3>Horn-Schunck Objective Function</h3>
+Horn-Schunck objective function is:
+<div align="left">
+<a href="./HSfunction.jpg" ><img  src="./HSfunction.jpg" alt="HSfunction" width="635" height="84" /></a>
+</div>
+The optic flow problem is modeled into the optimization of the objective function above. Noted that we assume the optic flow is smoothed, a median filter is used on the result.
+
+<h3>Variational Framework</h3>
+This is a polynomial root finding problem which can solve using Newton’s method iteratively. The iterative objective function is then changed to:
+<div align="left">
+<a href="./f2.jpg" ><img  src="./f2.jpg" alt="f2"/></a>
+</div>
+Let
+<div align="left">
+<a href="./f3.jpg" ><img  src="./f3.jpg" alt="f3"/></a>
+</div>
+Thus according to Taylor expansion, the objective function is changed to:
+<div align="left">
+<a href="./f4.jpg" ><img  src="./f4.jpg" alt="f4"/></a>
+</div>
+
+<h3>Optimization</h3>
+Define Laplacian filter as:
+<div align="left">
+<a href="./f5.jpg" ><img  src="./f5.jpg" alt="f5"/></a>
+</div>
+Then, optimization of objective function can be solved by the following linear system 
+<div align="left">
+<a href="./f6.jpg" ><img  src="./f6.jpg" alt="f6"/></a>
+</div>
+
+<h3>A coarse-to-fine Schema</h3>
+In this framework, a coarse-to-fine refining scheme is built on Gaussian pyramids constructed on input images. Each two successive levels are with downsampling rate 0.8 (can be adjusted).
+
+<h3>Evaluation</h3>
+The result is evaluated by two measures: Average Angle Error (AAE) and End Point Error (EPE). 
+They are defined by comparing the flow result with the ground truth flow. 
+The lower the AAE and EPE are, the better the optical flow performance is. 
+Also the result can be visually estimated from visualization of the flow map.
+
+
+<h3>Algorithm Flowchart</h3>
+
+<p>Input: frame1,frame2,Î»<br>
+Build image pyramid;<br>
+Initialize flow = 0;<br>
+For I = numPyramidLevel downto 1<br>
+--Initialize flow from previous level;<br>
+--Build gradient matrix and Laplacian matrix;<br>
+--For j = 1:maxWarpingNum<br>
+----Warp image using flow vector; <br>
+----Compute image gradient Ix, Iy, and Iz; <br>
+----Build linear system to solve HS flow;<br>
+----Solve linear system to compute the flow;<br>
+----Use median filter to smooth the flow map;<br>
+--EndFor<br>
+--Use median filter to smooth the flow map;<br>
+EndFor<br>
+Output: flow</p>
+
+The median filter is used in each iteration and in each level to get a better performance. More discussions are in analysis part.
+<h2 align="left"><font face="Arial"><u>Experiment Results and Analysis</u></font></h2>
+
+
+Parameter:
+
+downsampling rate = 0.8,
+
+lam = 10,
+
+maxwarping = 10,
+
+median filter window size = [5, 5],
+
+smooth_sigma = sqrt(2.0).
+
+<h3>-Dimetrodon</h3>
+<tr valign="top">
+	<td colspan="2" width="1040">
+		<div class="wpmd">
+			<div>
+				<br>
+			</div>
+			<div align="center">
+				<img border="0" hspace="1" vspace="1" src="./Dimetrodon.jpg" width="300" height="200">
+				<font class="ws16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+				<img border="0" hspace="1" vspace="1" src="./Dimetrodon_f.jpg" width="300" height="200">
+			</div>
+			<div>
+				<br>
+			</div>
+			<div align="center">
+				<font class="ws16">warped image2</font>
+				<font class="ws16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+				<font class="ws16">estimate flow</font>
+			</div>
+			<div>
+				<br>
+			</div>
+		</div>
+	</td>
+</tr>
+
+<h3>-Grove2</h3>
+<tr valign="top">
+	<td colspan="2" width="1040">
+		<div class="wpmd">
+			<div>
+				<br>
+			</div>
+			<div align="center">
+				<img border="0" hspace="1" vspace="1" src="./Grove2.jpg" width="320" height="250">
+				<font class="ws16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+				<img border="0" hspace="1" vspace="1" src="./Grove2_f.jpg" width="320" height="250">
+			</div>
+			<div>
+				<br>
+			</div>
+			<div align="center">
+				<font class="ws16">warped image2</font>
+				<font class="ws16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+				<font class="ws16">estimate flow</font>
+			</div>
+			<div>
+				<br>
+			</div>
+		</div>
+	</td>
+</tr>
+
+<h3>-Grove3</h3>
+<tr valign="top">
+	<td colspan="2" width="1040">
+		<div class="wpmd">
+			<div>
+				<br>
+			</div>
+			<div align="center">
+				<img border="0" hspace="1" vspace="1" src="./Grove3.jpg" width="320" height="250">
+				<font class="ws16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+				<img border="0" hspace="1" vspace="1" src="./Grove3_f.jpg" width="320" height="250">
+			</div>
+			<div>
+				<br>
+			</div>
+			<div align="center">
+				<font class="ws16">warped image2</font>
+				<font class="ws16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+				<font class="ws16">estimate flow</font>
+			</div>
+			<div>
+				<br>
+			</div>
+		</div>
+	</td>
+</tr>
+
+<h3>-Hydrangea</h3>
+<tr valign="top">
+	<td colspan="2" width="1040">
+		<div class="wpmd">
+			<div>
+				<br>
+			</div>
+			<div align="center">
+				<img border="0" hspace="1" vspace="1" src="./Hydrangea.jpg" width="300" height="200">
+				<font class="ws16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+				<img border="0" hspace="1" vspace="1" src="./Hydrangea_f.jpg" width="300" height="200">
+			</div>
+			<div>
+				<br>
+			</div>
+			<div align="center">
+				<font class="ws16">warped image2</font>
+				<font class="ws16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+				<font class="ws16">estimate flow</font>
+			</div>
+			<div>
+				<br>
+			</div>
+		</div>
+	</td>
+</tr>
+
+<h3>-RubberWhale</h3>
+<tr valign="top">
+	<td colspan="2" width="1040">
+		<div class="wpmd">
+			<div>
+				<br>
+			</div>
+			<div align="center">
+				<img border="0" hspace="1" vspace="1" src="./RubberWhale.jpg" width="300" height="200">
+				<font class="ws16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+				<img border="0" hspace="1" vspace="1" src="./RubberWhale_f.jpg" width="300" height="200">
+			</div>
+			<div>
+				<br>
+			</div>
+			<div align="center">
+				<font class="ws16">warped image2</font>
+				<font class="ws16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+				<font class="ws16">estimate flow</font>
+			</div>
+			<div>
+				<br>
+			</div>
+		</div>
+	</td>
+</tr>
+
+<h3>-Urban2</h3>
+<tr valign="top">
+	<td colspan="2" width="1040">
+		<div class="wpmd">
+			<div>
+				<br>
+			</div>
+			<div align="center">
+				<img border="0" hspace="1" vspace="1" src="./Urban2.jpg" width="320" height="250">
+				<font class="ws16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+				<img border="0" hspace="1" vspace="1" src="./Urban2_f.jpg" width="320" height="250">
+			</div>
+			<div>
+				<br>
+			</div>
+			<div align="center">
+				<font class="ws16">warped image2</font>
+				<font class="ws16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+				<font class="ws16">estimate flow</font>
+			</div>
+			<div>
+				<br>
+			</div>
+		</div>
+	</td>
+</tr>
+
+<h3>-Urban3</h3>
+<tr valign="top">
+	<td colspan="2" width="1040">
+		<div class="wpmd">
+			<div>
+				<br>
+			</div>
+			<div align="center">
+				<img border="0" hspace="1" vspace="1" src="./Urban3.jpg" width="320" height="250">
+				<font class="ws16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+				<img border="0" hspace="1" vspace="1" src="./Urban3_f.jpg" width="320" height="250">
+			</div>
+			<div>
+				<br>
+			</div>
+			<div align="center">
+				<font class="ws16">warped image2</font>
+				<font class="ws16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+				<font class="ws16">estimate flow</font>
+			</div>
+			<div>
+				<br>
+			</div>
+		</div>
+	</td>
+</tr>
+
+<h3>-Venus</h3>
+<tr valign="top">
+	<td colspan="2" width="1040">
+		<div class="wpmd">
+			<div>
+				<br>
+			</div>
+			<div align="center">
+				<img border="0" hspace="1" vspace="1" src="./Venus.jpg" width="320" height="250">
+				<font class="ws16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+				<img border="0" hspace="1" vspace="1" src="./Venus_f.jpg" width="320" height="250">
+			</div>
+			<div>
+				<br>
+			</div>
+			<div align="center">
+				<font class="ws16">warped image2</font>
+				<font class="ws16">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </font>
+				<font class="ws16">estimate flow</font>
+			</div>
+			<div>
+				<br>
+			</div>
+		</div>
+	</td>
+</tr>
+
+<h3>AAE and EPE</h3>
+
+
+<table border="1">
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<tr>
+		<th> </th>
+		<th>Dimetrodon</th>
+		<th>Grove2</th>
+		<th>Grove3</th>
+		<th>Hydrangea</th>
+		<th>RubberWhale</th>
+		<th>Urban2</th>
+		<th>Urban3</th>
+		<th>Venus</th>
+		<th>Average</th>
+	</tr>
+	<tr>
+		<td>AAE</td>
+		<td>5.376</td>
+		<td>3.701</td>
+		<td>8.359</td>
+		<td>3.133</td>
+		<td>5.215</td>
+		<td>6.607</td>
+		<td>8.548</td>
+		<td>8.857</td>
+		<td>6.225</td>
+	</tr>
+	<tr>
+		<td>EPE</td>
+		<td>0.255</td>
+		<td>0.250</td>
+		<td>0.846</td>
+		<td>0.257</td>
+		<td>0.163</td>
+		<td>1.762</td>
+		<td>1.338</td>
+		<td>0.601</td>
+		<td>0.684</td>
+	</tr>
+	<tr>
+		<td>Runtime(s)</td>
+		<td>458.346</td>
+		<td>801.273</td>
+		<td>817.712</td>
+		<td>479.116</td>
+		<td>467.063</td>
+		<td>782.141</td>
+		<td>794.436</td>
+		<td>295.109</td>
+		<td>611.900</td>
+	</tr></table>
+<h3>Analysis of Median Filter</h3>
+To simply observe the improvement of median filter in different places, the RubberWhale with maxwarping=10 is used to evaluate the result of four situations:
+
+<table border="1">
+	<col width="100" />
+	<col width="100" />
+	<col width="200" />
+	<col width="250" />
+	<col width="300" />
+	<tr>
+		<th> </th>
+		<th>No filter</th>
+		<th>filter in each level</th>
+		<th>filter in each iteration</th>
+		<th>filter in each level & iteration</th>
+	</tr>
+	<tr>
+		<td>AAE</td>
+		<td>10.780</td>
+		<td>6.230</td>
+		<td>6.621</td>
+		<td>5.947</td>
+	</tr>
+	<tr>
+		<td>EPE</td>
+		<td>0.477</td>
+		<td>0.209</td>
+		<td>0.223</td>
+		<td>0.202</td>
+	</tr>
+</table>
+We can find that the performance is the best when median filter is applied in each level and in each iteration. So I choose this situation as the final algorithm.
+
+<h3>Analysis of Parameters</h3>
+
+Use Venus as a example, fixed other parameters and change lam, the AAE and EPE is listed as follow:
+<table border="1">
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<tr>
+		<th>lam </th>
+		<th>1</th>
+		<th>3</th>
+		<th>5</th>
+		<th>10</th>
+		<th>20</th>
+		<th>30</th>
+	</tr>
+	<tr>
+		<td>AAE</td>
+		<td>8.133</td>
+		<td>7.582</td>
+		<td>8.660 </td>
+		<td>8.857 </td>
+		<td>9.912 </td>
+		<td>10.920 </td>
+	</tr>
+	<tr>
+		<td>EPE</td>
+		<td>0.566 </td>
+		<td>0.545 </td>
+		<td>0.578</td>
+		<td>0.601</td>
+		<td>0.672</td>
+		<td>0.732</td>
+	</tr>
+</table>
+
+When lam = 3, the performance is the best.  <br>
+Use RubberWhale as another example, fixed other parameters and change lam, the AAE and EPE is listed as follow:
+<table border="1">
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<tr>
+		<th>lam </th>
+		<th>1</th>
+		<th>3</th>
+		<th>5</th>
+		<th>10</th>
+		<th>20</th>
+		<td>30 </td>
+	</tr>
+	<tr>
+		<td>AAE</td>
+		<td>6.011 </td>
+		<td>5.917 </td>
+		<td>5.782  </td>
+		<td>5.947  </td>
+		<td>5.828 </td>
+		<td>6.101  </td>
+	</tr>
+	<tr>
+		<td>EPE</td>
+		<td>0.200  </td>
+		<td>0.200  </td>
+		<td>0.193 </td>
+		<td>0.202</td>
+		<td>0.193 </td>
+		<td>0.203  </td>
+	</tr>
+</table>
+
+When lam = 5, the performance is the best. As a result, the best lam is different from different images.
+<h3>Efficiency Analysis</h3>
+
+There are two main parameters that will affect the speed of algorithm: downsampling rate and maxwarping. When downsampling rate is low, the algorithm will be faster but might have a poor accuracy, so as maxwarping. It is a trade-off between accuracy and efficiency. Let's see the impact of the two parameters.
+<h4>Downsampling Rate</h4>
+Use Venus as a example, fixed other parameters and change downsampling rate, the AAE, EPE and Runtime is listed as follow:
+<table border="1">
+	<col width="150" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<tr>
+		<th>downsampling rate </th>
+		<th>0.5</th>
+		<th>0.6</th>
+		<th>0.7</th>
+		<th>0.8</th>
+		<th>0.9</th>
+	</tr>
+	<tr>
+		<td>AAE</td>
+		<th>11.004</th>
+		<th>9.753</th>
+		<th>8.676</th>
+		<th>8.857 </th>
+		<th>9.224</th>
+	</tr>
+	<tr>
+		<td>EPE</td>
+		<th>1.061 </th>
+		<th>0.833 </th>
+		<th>0.647</th>
+		<th>0.601</th>
+		<th>0.609 </th>
+	</tr>
+	<tr>
+		<td>Runtime</td>
+		<th>168.785</th>
+		<th>186.282</th>
+		<th>222.395</th>
+		<th>295.109</th>
+		<th>519.188</th>
+	</tr>
+</table>
+<div align="left">
+<a href="./time1.jpg" ><img  src="./time1.jpg" alt="time1" /></a>
+</div>
+From the result we can find that with downsampling rate increasing, the runtime is increasing but AAE and EPE is decreasing. And we can find that downsampling rate = 0.8 is a good choice to get a fast, good result.
+
+<h4>Maxwarping</h4>
+Fixed other parameters, set downsampling rate = 0.8, change maxwarping, the AAE, EPE and Runtime is listed as follow:
+<table border="1">
+	<col width="150" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<col width="100" />
+	<tr>
+		<th>maxwarping</th>
+		<th>3</th>
+		<th>5</th>
+		<th>8</th>
+		<th>10</th>
+		<th>15</th>
+	</tr>
+	<tr>
+		<td>AAE</td>
+		<th>9.894 </th>
+		<th>9.578 </th>
+		<th>9.556</th>
+		<th>8.857 </th>
+		<th>8.859</th>
+	</tr>
+	<tr>
+		<td>EPE</td>
+		<th>0.704  </th>
+		<th>0.659  </th>
+		<th>0.652 </th>
+		<th>0.601</th>
+		<th>0.589  </th>
+	</tr>
+	<tr>
+		<td>Runtime</td>
+		<th>86.798</th>
+		<th>147.387</th>
+		<th>235.403</th>
+		<th>295.109</th>
+		<th>448.117</th>
+	</tr>
+</table>
+<div align="left">
+<a href="./time2.jpg" ><img  src="./time2.jpg" alt="time2" /></a>
+</div>
+From the result we can find that with maxwarping increasing, the runtime is increasing but AAE and EPE is decreasing. And we can find that maxwarping = 10 is a good choice to get a fast, good result.
+
+
+
+</body>
+
+
+</html>
